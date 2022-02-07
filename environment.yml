@@ -8,7 +8,6 @@ dependencies:
   - r-dplyr
   - r-openxlsx
   - r-moments
-  - r-lawstat
   - r-BSDA
   - r-EnvStats
   - r-binom
