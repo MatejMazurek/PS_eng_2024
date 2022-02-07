@@ -17,12 +17,12 @@ library(readxl)
 # * Načítání dat ####
 
 # The path you see in 'Files' is not always the same as wd
-getwd ()
+getwd()
 
 # setwd ('path to current file')
 # using 'More' in the file browser
 
-data = read.csv2 (file = "./ data / aku.csv")
+data = read.csv2 (file = "./data/aku.csv")
 
 # loading can be done using GUI
 # File-> Import Dataset (csv, Excel reader)
@@ -49,3 +49,4 @@ a
 
 # * help
 help(sequence)
+
