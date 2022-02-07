@@ -1,0 +1,19 @@
+ 
+channels:
+  - conda-forge
+dependencies:
+  - r-base=4.0
+  - r-tidyverse
+  - r-readxl
+  - r-dplyr
+  - r-openxlsx
+  - r-moments
+  - r-lawstat
+  - r-BSDA
+  - r-EnvStats
+  - r-binom
+  - r-car
+  - r-dunn.test
+  - r-lsr
+  - r-epiR
+  - r-nortest
