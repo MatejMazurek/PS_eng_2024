@@ -1,0 +1,19 @@
+install.packages(
+  "binom",
+  "BSDA",
+  "car",
+  "dplyr",
+  "dunn.test",
+  "EnvStats",
+  "epiR",
+  "FSA",
+  "lawstat",
+  "lsr",
+  "moments",
+  "nortest",
+  "openxlsx",
+  "rcompanion",
+  "readxl",
+  "robustbase",
+  "stringi"
+)
