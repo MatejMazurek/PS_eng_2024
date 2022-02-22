@@ -155,10 +155,13 @@ E_X_Y2
 X_Y = P # matrix where in each column is the value x * y
 for(x in X){
     for(y in Y){
-        X_Y[x==X, y==Y] = x*y  
+        X_Y[toString(x), toString(y)] = x*y  
     }
 }
 X_Y
+
+# or we can use matrix multiplication 
+X %*% t(Y)
 
 # mean value of E(X * Y)
 E_XY = sum(X_Y*P)

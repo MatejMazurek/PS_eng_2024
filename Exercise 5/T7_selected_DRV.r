@@ -20,7 +20,8 @@
 #  
 # - starts with the letter **p**: $p = P(X \leq x)$:p=p...(x,...)
 #  
-# - note Cumulative probability is with the alternative definition $P(X \leq t)$
+# - note that Cumulative probability in R is with the alternative definition $P(X \leq
+# t)$
 #  
 # - for our distribution function $F(t) = P(X<t)$: F(t)=p...(t - 1,...)
 #  
@@ -184,7 +185,7 @@ phyper(5 - 1, M, N - M, n)
 
 # * Negative binomial(Geometric): $X \sim NB(k, π), X \sim Ge(π) = NB(1, π)$ ####
 #  
-# - number of attempts up to $k$. success(inclusive)
+# - number of attempts up to $k$-th success(inclusive)
 #  
 # - Every attempt has a chance of success $π$
 #  
@@ -384,7 +385,7 @@ plot(x, p)
 
 # * Example 5. ####
 #  
-# Pour 15 coins on the table. What is the probability that the number of coins lying
+# Throw 15 coins on the table. What is the probability that the number of coins lying
 # face up is from 8 to 15?
 #  
 
@@ -409,8 +410,8 @@ plot(x, p)
 # * Example 6. ####
 #  
 # The probability that we will call the studio of the radio station that has just
-# announced a telephone competition is 0.08. What is the probability that we will appeal
-# on the 4th attempt at the most?
+# announced a telephone competition is 0.08. What is the probability that we will manage
+# to get in on the 4th attempt at the most?
 #  
 
 

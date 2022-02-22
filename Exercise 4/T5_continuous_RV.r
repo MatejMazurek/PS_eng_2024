@@ -29,6 +29,13 @@ a = -1
 b = 2
 integrate(f, a, b)
 
+x = seq(0,10,0.1)
+
+y=x*x/100
+plot(x,y)
+
+(9*50-20^2)/9
+
 #  Examples ####
 #  
 # * Example 1. ####
@@ -262,8 +269,8 @@ sqrt(2)/2
 # * Example 4 ####
 #  
 # Calculate $\omega$ such that a random variable X with probability
-# density:$f(x)=\begin{cases} 0 & x < 0 \\ 3e^{-3x}    & x \geq 0
-# \end{cases}$was 0.3 greater than $\omega$
+# density:$f(x)=\begin{cases} 0 & x < 0 \\ 3e^{-3x}    & x \geq 0 \end{cases}$is
+# greater than $\omega$ with probability 0.3.
 #  
 
 

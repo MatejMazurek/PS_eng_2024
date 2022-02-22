@@ -26,7 +26,7 @@
 #  
 
 
-# * Even distribution: $X \sim Ro(a, b)$ ####
+# * Uniform distribution: $X \sim U(a, b)$ ####
 #  
 # - the random variable takes on only values greater than a and less than b
 #  
@@ -274,7 +274,7 @@ qexp(0.95, lambda)
 # * Example 3. ####
 #  
 # The production facility fails on average once every 2000 hours. The quantity Y
-# representing the fault waiting time has an exponential distribution. Determine the
+# representing the time before the fault has an exponential distribution. Determine the
 # time T0 so that the probability that the device will run longer than T0 is 0.99.
 #  
 
@@ -288,7 +288,7 @@ qexp(0.01, lambda)
 
 # * Example 4. ####
 #  
-# The measurement results are loaded only with a normally distributed error with zero
+# The measurement results are corrupted only with a normally distributed error with zero
 # mean and a standard deviation of 3 mm. What is the probability that there will be an
 # error in the interval(0 mm; 2.4 mm) at least once in 3 measurements?
 #  
@@ -402,7 +402,8 @@ for(k in 1:5){
 #  
 # An accompanying film about the life of the author of the exhibited works is screened
 # on a tour of the exhibition. His screening begins every 20 minutes. Determine the
-# probability that if you accidentally come to the screening room,
+# probability that if you come to the screening room at random time (and you have no
+# clue about screening shedule),
 #  
 
 
@@ -447,7 +448,7 @@ sigma_X
 
 # * Example 8. ####
 #  
-# During quality control, we only take over the part if its dimension is in the range of
+# During quality control, we only accept the part if its dimension is in the range of
 # 26-27 mm. The dimensions of the components have a normal distribution with a mean
 # value of 26.4 mm and a standard deviation of 0.2 mm. What is the probability that the
 # size of the part randomly selected for inspection will be within the required limits?
