@@ -1,5 +1,5 @@
 # ......................................................................................
-# ........................Exercise 8. Selection characteristics ........................
+# ..........................Exercise 8. Sampling distributions..........................
 # .....................................Michal Béreš.....................................
 # ......................................................................................
 
@@ -23,11 +23,11 @@
 
 n =  5 # number of degrees of freedom
 x = seq(from = 0, to = 30, by = 0.01) # x-axis
-fx = dchisq(x = x, df = n) # chi-quad probability density. distribution
+fx = dchisq(x = x, df = n) # chi-sq probability density. distribution
 
 plot(x, fx, type='l')
 
-Fx = pchisq(q = x, df = n) # distrib. fce. chi-kvad. distribution
+Fx = pchisq(q = x, df = n) # distrib. f. of chi-sq. distribution
 
 plot(x, Fx, type='l')
 
@@ -53,7 +53,7 @@ fx = dt(x = x, df = n) # probability density of the student's distribution
 
 plot(x, fx, type='l')
 
-fnorm = dnorm(x, mean=0, sd=1)  # norm values. normal birth
+fnorm = dnorm(x, mean=0, sd=1)  # norm values. normal dist
 lines(x, fnorm, col="red")      # to the last graph
 
 
@@ -67,7 +67,7 @@ lines(x, Fnorm, col="red")      # to the last graph
 
 # * $F$ - Fisher-Snedecor distribution ####
 #  
-# - Used to test stairs of scatter
+# - Used to test ratio of variances
 #  
 # - $\frac{S_1^2/\sigma_1^2}{S_2^2/\sigma_2^2} \sim F_{n_1 - 1, n_2 - 1}$
 #  
@@ -91,36 +91,36 @@ plot(x, Fx, type='l')
 #  
 
 
-vel_nah_vyberu = 30
+selection_size = 30
 mu = 10
 sigma = 3
-nah_vyber = rnorm(n=vel_nah_vyberu, mean=mu, sd=sigma) 
-nah_vyber
+random_selection = rnorm(n=selection_size, mean=mu, sd=sigma) 
+random_selection
 
-mean(nah_vyber)
-sd(nah_vyber)
+mean(random_selection)
+sd(random_selection)
 
 # ** Random variable: average of values ####
 #  
 
 
-poc_vyberu = 1000
-prumery = numeric(poc_vyberu) # numeric produces vector 0
-smer_odchylky = numeric(poc_vyberu)
-for(i in 1:poc_vyberu){
-  nah_vyber = rnorm(n=vel_nah_vyberu,mean=mu,sd=sigma)
-  prumery[i] = mean(nah_vyber)
-  smer_odchylky[i] = sd(nah_vyber)
+n_selections = 1000
+means = numeric(n_selections) # numeric produces vector 0
+st_deviations = numeric(n_selections)
+for(i in 1:n_selections){
+  random_selection = rnorm(n=selection_size,mean=mu,sd=sigma)
+  means[i] = mean(random_selection)
+  st_deviations[i] = sd(random_selection)
 }
 
-hist(prumery)
+hist(means)
 
-qqnorm(prumery)
-qqline(prumery)
+qqnorm(means)
+qqline(means)
 
-mean(prumery)
-sd(prumery)
-sigma/sqrt(vel_nah_vyberu)
+mean(means)
+sd(means)
+sigma/sqrt(selection_size)
 
 #  How does the average of values from the uniform distribution behave? ####
 #  
@@ -129,45 +129,42 @@ sigma/sqrt(vel_nah_vyberu)
 #  
 
 
-vel_nah_vyberu = 30
+selection_size = 30
 a = 1
 b = 7
-nah_vyber=runif(n=vel_nah_vyberu, min=a, max=b)
-# nah_vyber
+random_selection=runif(n=selection_size, min=a, max=b)
+# random sample
 
-
-hist(nah_vyber)
-qqnorm(nah_vyber)
-qqline(nah_vyber)
+hist(random_selection)
 
 mu = (a+b)/2
 mu
-mean(nah_vyber)
+mean(random_selection)
 sigma = sqrt((b-a)^2/12)
 sigma
-sd(nah_vyber)
+sd(random_selection)
 
 # ** Random variable: average of values ####
 #  
 
 
-poc_vyberu = 1000
-prumery = numeric(poc_vyberu)
-smer_odchylky = numeric(poc_vyberu)
-for(i in 1:poc_vyberu){
-  nah_vyber = runif(n=vel_nah_vyberu, min=a, max=b)
-  prumery[i] = mean(nah_vyber)
-  smer_odchylky[i] = sd(nah_vyber)
+n_selections = 1000
+means = numeric(n_selections)
+st_deviations = numeric(n_selections)
+for(i in 1:n_selections){
+  random_selection = runif(n=selection_size, min=a, max=b)
+  means[i] = mean(random_selection)
+  st_deviations[i] = sd(random_selection)
 }
 
-hist(prumery)
+hist(means)
 
-qqnorm(prumery)
-qqline(prumery)
+qqnorm(means)
+qqline(means)
 
-mean(prumery)
-sd(prumery)
-sigma/sqrt(vel_nah_vyberu)
+mean(means)
+sd(means)
+sigma/sqrt(selection_size)
 
 #  Examples ####
 #  
@@ -192,14 +189,23 @@ sigma/sqrt(vel_nah_vyberu)
 #  
 # ** a) ####
 #  
-# Estimate the probability that the absolute deviation of the proportion of defective
-# products in the consignment from the probability of producing a defective product will
-# be less than 1%.
+# Estimate the probability that the proportion of defective products in the consignment
+# (300 products) will differ from the probability of producing a defective product by
+# less than 1% (i.e. $p-\pi \in <-0.01,0.01>$).
 #  
 
 
+# p-pi from -0.01 to 0.01
+# for pi = 0.04, p is from 0.03 to 0.05
+# having 300 products, we should observe between 9 and 15 defective ones
+
+# X...number of defective products out of 300
+# X~Binom(n=300, pi=0.04)
+# P(9 <= X <= 15)=P(X<=15)-P(X<9)
+pbinom(15,300,0.04)-pbinom(9-1,300,0.04)
+
 # X=(p - π)/sqrt(π*(1 - π)) * sqrt(n) ∼ N(0, 1)
-# P(-0.01/sqrt(π*(1 - π)) * sqrt(n)<X<0.01/sqrt(π*(1 - π)) * sqrt(n))
+# P(-0.01/sqrt(π*(1-π))*sqrt(n) < X < 0.01/sqrt(π*(1-π))*sqrt(n))
 pi = 0.04
 n = 300
 bound = 0.01/sqrt(pi*(1-pi))*sqrt(n)
@@ -211,22 +217,24 @@ pnorm(q=bound, mean=0, sd=1) - pnorm(q=-bound, mean=0, sd=1)
 #  
 
 
+pbinom(150,3000,0.04)-pbinom(90-1,3000,0.04)
+
 n = 3000
 bound = 0.01/sqrt(pi*(1-pi))*sqrt(n)
 pnorm(q=bound, mean=0, sd=1) - pnorm(q=-bound, mean=0, sd=1)
 
 # * Example 3. ####
 #  
-# Passengers regularly travel to and from public transport. It is known that the waiting
-# time for the arrival of public transport ranges from 0 to 3 minutes. What is the
-# probability that the total waiting time for an employee to arrive by public transport
-# in 23 working days will be less than 80 minutes?
+# Passenger regularly travel to and from work using public transport. It is known that
+# the waiting time for the arrival of public transport ranges from 0 to 3 minutes. What
+# is the probability that the total waiting time for a passenger during in 23 working
+# days will be less than 80 minutes?
 #  
 
 
 # Y... time of the i-th waiting for public transport
 # y~R(0; 3)
-# X... total waiting time in 23 days(round trip ⇒ 46 waiting)
+# X... total waiting time in 23 days(round trip ⇒ 46 waitings)
 # X~N(46 * EY; 46 * DY)
 # P(X<80)
 
@@ -244,7 +252,6 @@ pnorm(q=80, mean=n*EY, sd=sqrt(n*DY))
 # January is 120 kWh and the standard deviation of consumption is 100 kWh. Determine the
 # probability that the average consumption of 100 randomly selected households will be
 # greater than 140 kWh.
-#  
 
 
 # Xi... consumption of the i-th household
@@ -268,7 +275,7 @@ n = 100
 #  
 
 
-# X=(n - 1) S ^ 2/σ ^ 2
+# X=(n - 1) * S^2/σ^2
 # X ∼ χ_n-1
 # P(S>6)=P(X>...)
 
@@ -277,19 +284,18 @@ S_obs = 6
 sigma = 4
 X_obs = (n - 1)*S_obs^2/sigma^2
 
-P_jedno_mereni = 1 - pchisq(q=X_obs, df=n-1)
-P_jedno_mereni
-P_jedno_mereni^2
+P_one_observation = 1 - pchisq(q=X_obs, df=n-1)
+P_one_observation
+P_one_observation^2
 
 # * Example 6. ####
 #  
 # The mortality tables show a probability of 0.99 that a 35-year-old man will live
 # another year. The annual premium for this age group is CZK 2,000, in the event of
 # death the insurance company will pay CZK 100,000. What is the probability that the
-# profit of 500 insured men aged 35 will be at least CZK 500,000?(Solve in two ways -
-# using the binomial distribution and using the binomial distribution approximation by
-# the normal distribution.)
-#  
+# profit of the company insuring 500 men aged 35 will be at least CZK 500,000?(Solve in
+# two ways - using the binomial distribution and using the binomial distribution
+# approximation by the normal distribution.)
 
 
 # X... number of men out of 500 who won't live to see another year
