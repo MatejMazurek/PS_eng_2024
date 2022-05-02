@@ -1,5 +1,5 @@
 # ......................................................................................
-# ..........................Exercise 12. Multiselective tests ..........................
+# ........................Exercise 12. Tests for multiple samples.......................
 # ..................Michal Béreš, Martina Litschmannová, Adéla Vrtková..................
 # ......................................................................................
 
@@ -11,684 +11,528 @@
 #  
 
 
-# I will produce frame data with one column from give
-a = as.data.frame(rnorm(n = 35, mean = 107, sd = 10))
-b = as.data.frame(rnorm(n = 30, mean = 105, sd = 10))
-c = as.data.frame(rnorm(n = 40, mean = 102, sd = 10))
-d = as.data.frame(rnorm(n = 32, mean = 101, sd = 10))
+# I will create some data from the normal distribution with same variances
+a = as.data.frame(rnorm(n = 35, mean = 100, sd = 10))
+b = as.data.frame(rnorm(n = 30, mean = 108, sd = 10))
+c = as.data.frame(rnorm(n = 40, mean = 104, sd = 10))
+d = as.data.frame(rnorm(n = 32, mean = 112, sd = 10))
 
 # I will rename the column name
-colnames(a) = c("hodnota")
-colnames(b) = c("hodnota")
-colnames(c) = c("hodnota")
-colnames(d) = c("hodnota")
+colnames(a) = c("value")
+colnames(b) = c("value")
+colnames(c) = c("value")
+colnames(d) = c("value")
 
 # I will add a type for all frame data
-a$typ = "a"
-b$typ = "b"
-c$typ = "c"
-d$typ = "d"
+a$type = "group1"
+b$type = "group2"
+c$type = "group3"
+d$type = "group4"
 
 # I glue the lines together
 data = rbind(a,b,c,d)
-# Convert type to type factor
-data$typ = as.factor(data$typ)
+
+# Convert type to type factor (needed for some tests)
+data$type = as.factor(data$type)
 
 head(data)
 
-boxplot(data$hodnota ~ data$typ)
-# if there are any OPs, I will ignore them
-# I know the data is from a normal distribution!)
-# I also know they have the same variance)
+boxplot(data$value ~ data$type)
+# if there are any outliars, I will ignore them
+# I know the data is from a normal distribution!
+# I also know they have the same variance sd = 10
+
+#  Overview of tests and their functions ####
+#  
+# * Comparing the measures of Variability (variances) ####
 
 
-#  Overview of functions ####
-#  
-# * Variability measures ####
-#  
 # ** Bartlett test ####
-#  
-# - verifies the agreement of variances
-#  
+# - verifies the equality of variances 
 # - $H_0: \sigma^2_1 = \sigma^2_2 = \sigma^2_3 = \ldots$
-#  
 # - $H_A: \neg H_0$
-#  
-# - the precondition is data normality(and of course independence and continuity)
-#  
+# - the assumtion data normality(and of course independence and continuity)
 
 
-bartlett.test(data$hodnota ~ data$typ)
+bartlett.test(data$value ~ data$type)
 
 # ** Levene's test ####
-#  
-# - verifies the agreement of variances
-#  
+# - verifies the equality of variances 
 # - $H_0: \sigma^2_1 = \sigma^2_2 = \sigma^2_3 = \ldots$
-#  
 # - $H_A: \neg H_0$
-#  
 # - only independence and continuity are required
-#  
 
 
-car::leveneTest(data$hodnota ~ data$typ)
+car::leveneTest(data$value ~ data$type)
 
 # ** Cochran's and Hartley's test ####
-#  
-# - also verify the agreement of variances
-#  
+# - verifies the equality of variances 
 # - require data normality and so-called balanced sorting
-#  
-# - balanced sorting means that we have approximately the same amount of data in each
-# group
-#  
+#     - balanced sorting means that we have approximately the same amount of data in
+# each group
 # - we will not use them
-#  
-# * Position measures ####
-#  
+
+
+# * Comparing the measures of Position (means or medians)  ####
+# 
 # ** ANOVA(analysis of variance) ####
-#  
-# - verifies position matching(mean values)
-#  
+# - test the equality of mean values 
 # - $H_0: \mu_1 = \mu_2 = \mu_3 = \ldots$
-#  
 # - $H_A: \neg H_0$
-#  
 # - prerequisites:
-#  
-# - normality dat
-#  
-# - homoskedasticity(identical variances)
-#  
-# -(and of course independence and continuity)
-#  
+#     - normality dat
+#     - homoskedasticity(identical variances)
+#     - (and of course independence and continuity)
 # - if we reject $H_0$ Post-Hoc analysis is required
-#  
-# - using TukeyHSD test
-#  
+#     - using TukeyHSD test
+#     - we want the result in the form of letter scheme and effects
 
 
-# Basic ANOVA
+# ANOVA
 # H0: mu1=mu2=mu3=mu4
 # HA:~H0(H0 negation)
 
-res = aov(data$hodnota ~ data$typ)
+res = aov(data$value~ data$type)
 summary(res)
 
 # Post-Hoc analysis
 
 TukeyHSD(res)
 
-# effect counting
+# effect computation
 library(dplyr)
 
 # overall average
-prumer_vsech = mean(data$hodnota)
-prumer_vsech
+mean_overall = mean(data$value)
+mean_overall
 
 # averages in groups
-efekty = data %>% group_by(typ) %>% 
-    summarize(mean_skup = mean(hodnota))
+effects = data %>% group_by(type) %>% 
+    summarize(mean_group = mean(value))
 
 # effects
-efekty$efekt = efekty$mean_skup - prumer_vsech
+effects$effect = effects$mean_group - mean_overall
 
-# list sorted
-efekty %>% arrange(desc(efekt))
+# list them sorted
+effects %>% arrange(desc(effect))
+
+# letter scheme, library rcompanion
+
+# install.packages("rcompanion")
+posthoc = TukeyHSD(res)
+
+# how to get the matrix of values out of the result
+matrix_posthoc = posthoc[[1]]
+matrix_posthoc
+# now we make a dataframe with columns of pairs and pvalues
+posthoc_DF = data.frame(pairs = rownames(matrix_posthoc), 
+                   pval = matrix_posthoc[,'p adj'])
+posthoc_DF
+
+rcompanion::cldList(pval ~ pairs, 
+        data = posthoc_DF,
+        threshold = 0.05)
 
 # ** Kruskal - Wallis test ####
 #  
-# - verifies position match(medians)
-#  
+# - verifiesthe equality of medians
 # - $H_0: X_{0.5,1} = X_{0.5,2} = X_{0.5,3} = \ldots$
-#  
 # - $H_A: \neg H_0$
-#  
 # - prerequisites:
-#  
-# - data symmetry
-#  
-# -(and of course independence and continuity)
-#  
+#     - data symmetry
+#     - (and of course independence and continuity)
 # - if we reject $H_0$ Post-Hoc analysis is required
-#  
-# - using the Dunn test/method
-#  
+#     - using the Dunn test
+#         - method = "bonferroni" 
+#     - we want the result in the form of letter scheme and effects
 
 
-# Basic KW test
+# KW test
 # H0: X0.5,1=X0.5,2=X0.5,3=X0.5,4
 # HA:~H0(H0 negation)
 
-kruskal.test(data$hodnota ~ data$typ)
+kruskal.test(data$value ~ data$type)
 
 # Post-Hoc analysis
 
-# altP=T sets the p-value so that when making a decision
-# on statistical significance compared to alpha
-# default: altp=FALSE, then compare with alpha/2)
-
-# install.packages("dunn.test")
-
-dunn.test::dunn.test(x = data$hodnota, g = data$typ,
-          method = "bonferroni", altp = TRUE)
-
-# effect counting
-
-# total median
-median_vsech = median(data$hodnota)
-median_vsech
-
-# medians in groups
-efekty = data %>% group_by(typ) %>% 
-    summarize(median_skup = median(hodnota))
+# install.packages("FSA")
+FSA::dunnTest(data$value ~ data$type,   # FSA library
+              method="bonferroni")
 
 # effects
-efekty$efekt = efekty$median_skup - median_vsech
 
-# list sorted
-efekty %>% arrange(desc(efekt))
+# overall median
+median_overall = median(data$value)
+median_overall
+
+# medians in groups
+effects = data %>% group_by(type) %>% 
+    summarize(median_group = median(value))
+
+# effects
+effects$effect = effects$median_group - median_overall
+
+# list them sorted
+effects %>% arrange(desc(effect))
+
+# letter scheme, library rcompanion
+
+# install.packages("rcompanion")
+posthoc = FSA::dunnTest(data$value ~ data$type,   # FSA library
+              method="bonferroni")
+
+# how to get the matrix of values out of the result
+posthoc_DF = posthoc$res
+posthoc_DF
+# its in the data frame form already
+
+rcompanion::cldList(P.adj ~ Comparison, 
+        data = posthoc_DF,
+        threshold = 0.05)
 
 #  Examples ####
-#  
+
+
 # * Example 1. ####
-#  
-# We test the null hypothesis µ1=µ2=µ3. It was found that the data we have available are
-# selections from the normal distribution that satisfy the assumption of
-# homoskedasticity(agreement of variances). Based on the data obtained by the
-# exploratory analysis, complete the ANOVA table and the resulting conclusions. [!
-#  
-
-
-n = c(40,40,42)          # selection ranges
-prum = c(300,290,310)    # averages in individual groups/classes
-s = c(33,34,31)          # direction. deviations in individual groups/classes
-
-
-n.total = sum(n)         # total range of selections
-k = 3                    # number of classes
-df.b = k-1               # number of degrees of freedom - intergroup
-df.e = n.total-k         # number of degrees of freedom - residual
-
-
-# overall average(using weighted average)
-prum.total = weighted.mean(x = prum, w = n)
-prum.total
-
-# intergroup sum of squares
-ss.b = sum(n*(prum - prum.total)^2)
-ss.b
-
-# residual sum of squares
-ss.e = sum((n - 1)*s^2)
-ss.e 
-
-# total squares
-ss.b + ss.e
-
-# variance between groups/classes
-ms.b = ss.b/df.b
-ms.b
-
-# variance within groups/classes
-ms.e = ss.e/df.e
-ms.e
-
-# F-ratio
-F = ms.b/ms.e
-F
-
-# p-value
-p = 1 - pf(F,df.b,df.e)
-p
-
-# At the significance level of 0.05, we reject the hypothesis of agreement of the mean values
-# ie the mean values of at least one pair of groups become. significantly different.
-
-
-# group effects estimates
-efekt = prum - prum.total
-efekt
-
-# Compared to the overall average, group 2 shows the most below-average results
-# about 10 units lower than the overall average). On the contrary, the average of group 3 is
-# about 10 units higher than the overall average. Average results of group 1
-# correspond to the overall average.
-
-
-# * Example 2. ####
-#  
-# 122 patients who underwent heart surgery were randomly divided into three groups
-#  
-# **Group 1:** Patients received 50% nitrous oxide and 50% oxygen mixed continuously for
-# 24 hours.
-#  
-# **Group 2:** Patients received 50% nitric oxide and 50% oxygen only during
-# surgery.
-#  
-# **Group 3:** Patients received no nitrous oxide but received 35-50% oxygen for 24
+# 
+# 122 patients who underwent heart surgery were randomly divided into three groups 
+# - **Group 1:** Patients received 50% nitrous oxide and 50% oxygen mixed continuously
+# for 24 hours.
+# - **Group 2:** Patients received 50% nitric oxide and 50% oxygen only during surgery.
+# - **Group 3:** Patients received no nitrous oxide but received 35-50% oxygen for 24
 # hours.
-#  
-# The data in the folic acid.xls file correspond to the folic acid salt concentrations
-# in the red blood cells in all three groups after 24 hours of ventilation. Verify that
-# the observed differences between the folic acid salt concentrations are statistically
-# significant, ie that there is an effect of the composition of the mixture on the
-# monitored parameter.
-#  
+# 
+# The data in the sheet 1 of testy_vicevyberove.xlsx file correspond to the folic acid
+# salt concentrations in the red blood cells in all three groups 24 hours after the
+# surgery. Verify that the observed differences between the folic acid salt
+# concentrations are statistically significant, i.e. that there is an effect of the
+# composition of the mixture on the monitored parameter.
 
 
-kysel = readxl::read_excel("data/testy_vicevyberove.xlsx", sheet=1)
-colnames(kysel) = c("sk1","sk2","sk3")   # rename columns
-kysel
+acid = readxl::read_excel("data/testy_vicevyberove.xlsx", sheet=1)
+colnames(acid) = c("Group 1","Group 2","Group 3")   # rename columns
+head(acid)
 
 # conversion to standard data format
-kysel.s = stack(kysel)
-colnames(kysel.s) = c("hodnoty","skupina")
-kysel.s = na.omit(kysel.s)
-head(kysel.s)
+acid.s = stack(acid)
+colnames(acid.s) = c("values","group")
+acid.s = na.omit(acid.s)
+head(acid.s)
 
-boxplot(kysel.s$hodnoty ~ kysel.s$skupina)
-# Data do not contain remote observations.
+boxplot(acid.s$values ~ acid.s$group, xlab = "Test groups", ylab = "Folic acid salt concentration")
+# Data do not contain any outliars
 
+# we test the normality using S-W. test
 
-# we test the normality using S.-W. test
-library(dplyr)
-
-kysel.s %>% group_by(skupina) %>% 
-    summarise(norm.pval = shapiro.test(hodnoty)$p.value)
+acid.s %>% group_by(group) %>% 
+    summarise(pval_SW = shapiro.test(values)$p.value)
 
 # Information needed to set rounding
 
-kysel.s %>% group_by(skupina) %>% 
-    summarise(len = length(hodnoty), st.dev = sd(hodnoty))
+acid.s %>% group_by(group) %>% 
+    summarise(len = length(values), st.dev = sd(values))
 
 # sd is rounded to 3 valid digits
 # sd and position measures are rounded to tenths
 
 
-# Verification of variance agreement
-s2 = kysel.s %>% group_by(skupina) %>% 
-        summarise(var = sd(hodnoty)^2)
+# equality of variance
+s2 = acid.s %>% group_by(group) %>% 
+        summarise(var = sd(values)^2)
 s2 # sampling variances
 
 max(s2$var)/min(s2$var)
 # According to the box chart and information on the ratio of the largest and smallest
 # variances(<2) we do not assume that the variances differ statistically significantly
 
+# The assumption of normality was not rejected -> Bartlett's test
 
-# The presumption of normality was not rejected ->Bartlett's test
-bartlett.test(kysel.s$hodnoty ~ kysel.s$skupina)
+bartlett.test(acid.s$values ~ acid.s$group)
 
-# At the significance level of 0.05, the assumption of agreement of variances cannot be rejected
-# Bartlett test, x_OBS=0.878, df=2, p-value=0.645).
-
+# At the significance level of 0.05, there are no statistically significant differences in variances
 
 # We want to compare the mean values of independent samples from normal distributions
-# with same variances ->ANOVA
+# with same variances -> ANOVA
 # The aov() command requires data in the standard data format
 
-vysledky = aov(kysel.s$hodnoty ~ kysel.s$skupina) 
-summary(vysledky)  
+results = aov(acid.s$values ~ acid.s$group) 
+summary(results)  
 
-# At the significance level of 0.05, we reject the hypothesis of agreement of the mean values
-# ANOVA, p-value<<0.001) ->multiple comparison
-
+# At the significance level of 0.05, there are statistically significant differences in mean values
 
 # post-hoc analysis
-TukeyHSD(vysledky)
+TukeyHSD(results)
 
-# effect counting
-library(dplyr)
+# effect computation
 
 # overall average
-prumer_vsech = mean(kysel.s$hodnoty)
-prumer_vsech
+mean_overall = mean(acid.s$values)
+mean_overall
 
 # averages in groups
-efekty = kysel.s %>% group_by(skupina) %>% 
-    summarize(mean_skup = mean(hodnoty))
+effects = acid.s %>% group_by(group) %>% 
+    summarize(mean_group = mean(values))
 
 # effects
-efekty$efekt = efekty$mean_skup - prumer_vsech
+effects$effect = effects$mean_group - mean_overall
 
-# list sorted
-efekty %>% arrange(desc(efekt))
+# list them sorted
+effects %>% arrange(desc(effect))
 
-# If we consider a high folic acid content to be positive, then statistically
-# Group 1 patients achieved significantly best results(average content
-# folic acid about 27 units higher than av. folic acid content in the blood
-# all patients tested) and statistically significantly worst results
-# achieved by patients from group 2(average folic acid content by about 26 units
-# lower than the average content of folic acid in the blood of all tested patients).
-# Folic acid content in the blood of group 3 patients
-# corresponds to the overall average. All three groups of patients are according to each other
-# Folic acid content in the blood statistically significantly different.
+# letter scheme, library rcompanion
 
+# make a dataframe with columns of pairs and pvalues
+matrix_posthoc = TukeyHSD(results)[[1]]
+posthoc_DF = data.frame(pairs = rownames(matrix_posthoc), 
+                   pval = matrix_posthoc[,'p adj'])
+# letter scheme
+rcompanion::cldList(pval ~ pairs, 
+        data = posthoc_DF,
+        threshold = 0.05)
 
-# * Example 3. ####
+# * Example 2. ####
 #  
-# Three breeds of rabbits are bred on the farm. An experiment was performed on
-# kralici.xls, the aim of which was to find out whether, even if we keep and fatten all
-# rabbits for the same time and under the same conditions, there is a statistically
-# significant(conclusive) difference between breeds in rabbit weights. Verify.
-#  
+# Three breeds of rabbits are bred on the farm. An experiment was performed on sheet 2
+# of testy_vicevyberove.xlsx, the aim of which was to find out whether, even if we keep
+# all the rabbits for the same time and under the same conditions (food, environment),
+# there is a statistically significant difference between breeds in rabbit weights.
+# Verify.
 
 
-kralici = readxl::read_excel("data/testy_vicevyberove.xlsx", sheet=2)
-colnames(kralici) = c("viden","cesky","kalif")   # rename columns
-kralici
+rabbits = readxl::read_excel("data/testy_vicevyberove.xlsx", sheet=2)
+colnames(rabbits) = c("Vienna","Czech","Kalif")   # rename columns
+head(rabbits)
 
 # conversion to standard data format
-kralici.s = stack(kralici)
-colnames(kralici.s) = c("hodnoty","skupina")
-kralici.s = na.omit(kralici.s)
-head(kralici.s)
+rabbits.s = stack(rabbits)
+colnames(rabbits.s) = c("value","group")
+rabbits.s = na.omit(rabbits.s)
+head(rabbits.s)
 
-boxplot(kralici.s$hodnoty ~ kralici.s$skupina)
-# data contains OP
+boxplot(rabbits.s$value ~ rabbits.s$group)
+# data contains an outliar
 
+# Eliminate outliar
 
-# Eliminate remote observation
-pom = boxplot(kralici.s$hodnoty ~ kralici.s$skupina, plot = FALSE)
-pom$out
+rabbits.s$id = seq(1,length(rabbits.s$value))
 
-kralici.s$hodnoty.bez = kralici.s$hodnoty
-kralici.s$hodnoty.bez[kralici.s$hodnoty.bez %in% pom$out]=NA
+outliars = rabbits.s %>% group_by(group) %>% rstatix::identify_outliers(value)
+outliars
+
+rabbits.s$value_cleared = ifelse(rabbits.s$id %in% outliars$id, NA, rabbits.s$value)
 
 # Box chart
-boxplot(kralici.s$hodnoty.bez ~ kralici.s$skupina)
+boxplot(rabbits.s$value_cleared ~ rabbits.s$group)
 
 library(dplyr)
 
-kralici.s %>% group_by(skupina) %>% 
-    summarise(norm.pval = shapiro.test(hodnoty.bez)$p.value)
+rabbits.s %>% group_by(group) %>% 
+    summarise(norm.pval = shapiro.test(value_cleared)$p.value)
 
 # At the significance level of 0.05, we do not reject the assumption of normality.
 
-
-# Information needed to set rounding
-kralici.s %>% group_by(skupina) %>%
-    summarize(len = sum(!is.nan(hodnoty.bez)), 
-              sd = sd(hodnoty.bez, na.rm = TRUE))
+# Information needed for correct rounding
+rabbits.s %>% group_by(group) %>%
+    summarize(len = sum(!is.nan(value_cleared)), 
+              sd = sd(value_cleared, na.rm = TRUE))
 
 # sd is rounded to 2 valid digits
-# sd and position measurements zaok. to hundredths(unification across species of rabbits)
+# sd and position measurements round to hundredths
 
+# The assumption of normality was not rejected ->Bartlett's test
+bartlett.test(rabbits.s$value_cleared ~ rabbits.s$group) 
 
-# Variation compliance verification
-s2 = kralici.s %>% group_by(skupina) %>%
-        summarize(var = sd(hodnoty.bez, na.rm = TRUE)^2)
-s2
+# At the significance level of 0.05, the equality of variances cannot be rejected
 
-max(s2$var)/min(s2$var)
-# According to the box chart and information on the ratio of the largest and smallest dispersion.
-# close to 2, but selection range<30) it is more difficult to estimate whether it is possible
-# assume variance agreement. The test will help us decide.
-
-
-# The presumption of normality was not rejected ->Bartlett's test
-bartlett.test(kralici.s$hodnoty.bez ~ kralici.s$skupina) 
-
-# At the significance level of 0.05, the assumption of agreement of variances cannot be rejected
-# Bartlett test, x_OBS=3.1, df=2, p-value=0.217).
-
-
-# We want to compare the mean values of independent samples from normal ones
-# distributions with same variances ->ANOVA
+# We want to compare the mean values of independent samples from normal
+# distributions with the same variances -> ANOVA
 # The aov() command requires data in the standard data format
 
-vysledky = aov(kralici.s$hodnoty.bez ~ kralici.s$skupina)
-summary(vysledky)  
+results = aov(rabbits.s$value_cleared ~ rabbits.s$group)
+summary(results)  
 
-# At the significance level of 0.05, we reject the hypothesis of agreement of the mean values
-# p-value<<0.001, ANOVA) ->multiple comparison
-
+# At the significance level of 0.05, we reject the hypothesis of equality of the mean values
 
 # post-hoc analysis
-TukeyHSD(vysledky)
+TukeyHSD(results)
 
-# effect counting
-library(dplyr)
+# effect computation
 
 # overall average
-prumer_vsech = mean(kralici.s$hodnoty.bez, na.rm = TRUE)
-prumer_vsech
+mean_overall = mean(rabbits.s$value_cleared, na.rm = TRUE)
+mean_overall
 
 # averages in groups
-efekty = kralici.s %>% group_by(skupina) %>% 
-    summarize(mean_skup = mean(hodnoty.bez, na.rm = TRUE))
+effects = rabbits.s %>% group_by(group) %>% 
+    summarize(mean_group = mean(value_cleared, na.rm = TRUE))
 
 # effects
-efekty$efekt = efekty$mean_skup - prumer_vsech
+effects$effect = effects$mean_group - mean_overall
 
-# list sorted
-efekty %>% arrange(desc(efekt))
+# list them sorted
+effects %>% arrange(desc(effect))
 
-# * Example 4. ####
+# * Example 3. ####
 #  
 # Four manufacturers A, B, C, D sent a total of 66 products to the competition for the
-# best product quality. The jury compiled the order(only the order of the product from
-# best to worst), which is listed in the file quality.xls. On the basis of the above
-# data, assess whether the origin of the products affects its quality.
-#  
+# best product quality. The jury compiled the ranking (only the position of the product
+# in the list of 66 from best to worst), which is listed in the sheet 3 of the file
+# testy_vicevyberove.xlsx. On the basis of the above data, assess whether the origin of
+# the products affects its quality.
 
 
-jakost.s = readxl::read_excel("data/testy_vicevyberove.xlsx", sheet = 3)
-colnames(jakost.s) = c("poradi", "skupina")   # rename columns
-head(jakost.s)
+quality = readxl::read_excel("data/testy_vicevyberove.xlsx", sheet = 3)
+colnames(quality) = c("ranking", "manufacturer")   # rename columns
+head(quality)
 # data is already in standard format
 
+boxplot(quality$ranking ~ quality$manufacturer)
 
-boxplot(jakost.s$poradi ~ jakost.s$skupina)
-
-# Verification of normality does not make sense - by nature it is a dis. data-order
-
-
-# Information needed to set rounding
-jakost.s %>% group_by(skupina) %>%
-    summarize(len = length(poradi), 
-              sd = sd(poradi))
-
-# sd is rounded to 2 valid digits
-# sd and position measures are rounded to integers
-
-
-# Variation compliance verification
-s2 = jakost.s %>% group_by(skupina) %>% summarize(var = sd(poradi)^2)
-s2
-
-max(s2$var)/min(s2$var)
-# According to the box chart and information on the ratio of the largest and smallest
-# variances(<2) from assuming variance agreement.
-# Kruskal - Wallis test has more test power if the data is homosc.)
-
-
-# This is "serial" data, it makes no sense to consider the assumption of standards.
-# ->Levene's test
-car::leveneTest(jakost.s$poradi ~ jakost.s$skupina) 
-# At the significance level of 0.05, the assumption of agreement of variances cannot be rejected
-# Leven's test, x_OBS=0.4, df_num=3, df_denom=62, p-value=0.750)
-
+# the data are not independent by nature, also they are not continuous!
+# outliars should not be present by the nature of the dataset
+# the assumptions are corrupted for all tests -> our best bet is the most robust test in our arsenal
+# we skip directly into KW test
 
 # Symmetry verification
 
-jakost.s %>% group_by(skupina) %>% 
-    summarize(sikmost = moments::skewness(poradi),
-              test.pval = lawstat::symmetry.test(poradi,boot=FALSE)$p.value)
+quality %>% group_by(manufacturer) %>% 
+    summarize(skewness = moments::skewness(ranking))
 
-# We want to compare the medians of independent samples ->Kruskal-Wallis test
-kruskal.test(jakost.s$poradi ~ jakost.s$skupina)
+# We want to compare the medians of "independent" samples -> Kruskal-Wallis test
+kruskal.test(quality$ranking ~ quality$manufacturer)
 
-# At the significance level of 0.05, the median agreement hypothesis cannot be rejected
-# Kruskal-Wallis test, x_OBS=3.7, df=3, p-value=0.295).
-# Ie. statistically significant differences between producers(in terms of rank
-# products in competition) do not exist.
+# At the significance level of 0.05, there are no statistically significant differences in medians
 
-
-# * Example 5. ####
+# * Example 4. ####
 #  
-# The effect of three slides on blood clotting was studied. In addition to other
-# indicators, the so-called thrombin time was determined. Data on 42 monitored persons
-# are recorded in the file trombin.xls. Does the size of the thrombin time depend on
-# which preparation was used?
-#  
+# The effect of three types of medicaments on blood clotting was studied (so called
+# thrombin time). Data of 42 monitored persons are recorded in the sheet 4 of the file
+# testy_vicevyberove.xlsx. Does the thrombin time depend on which preparation was used?
 
 
 trombin.s = readxl::read_excel("data/testy_vicevyberove.xlsx", 
                                sheet=4, skip = 1)
-colnames(trombin.s) = c("hodnoty","skupina")   # rename columns
+colnames(trombin.s) = c("value","group")   # rename columns
 
 head(trombin.s)
 # data is already in standard format
 
 
-# exploratory analysis - verification of OP
-boxplot(trombin.s$hodnoty ~ trombin.s$skupina)
-# does not contain OP
-
+# exploratory analysis
+boxplot(trombin.s$value ~ trombin.s$group)
+# no outliars
 
 # verification of normality
 library(dplyr)
 
-trombin.s %>% group_by(skupina) %>%
-    summarize(norm.pval = shapiro.test(hodnoty)$p.value)
+trombin.s %>% group_by(group) %>%
+    summarize(norm.pval = shapiro.test(value)$p.value)
 
-# At the significance level of 0.05 we reject the assumption of normality(for Ačka)
+# At the significance level of 0.05 we reject the assumption of normality(for A)
 
+# we can at least test the equality of variances -> same variances
+# means better KW test result in terms of type II error
 
-# Information needed to set up rounding
+# The assumption of normality was rejected -> Levene's test
 
-trombin.s %>% group_by(skupina) %>%
-    summarize(len = length(hodnoty), stdev = sd(hodnoty))
+car::leveneTest(trombin.s$value ~ trombin.s$group) 
 
-# sd is rounded to 2 valid digits
-# sd and position measures are rounded to hundredths(unification across groups)
-
-
-# Verification of variance agreement(not necessary - we have to use KW anyway)
-s2 = trombin.s %>% group_by(skupina) %>%
-        summarize(var = sd(hodnoty)^2)
-s2
-
-max(s2$var)/min(s2$var)
-# According to the box chart and information on the ratio of the largest and the smallest
-# variances(>>2) cannot match variances.
-
-
-# The presumption of normality was rejected ->Levene's test
-
-# thrombin.s $ group=as.factor(trombin.s $ group)
-
-car::leveneTest(trombin.s$hodnoty ~ trombin.s$skupina) 
-
-# the presumption of homoskedasticity was rejected
-
+# the assumption of homoskedasticity was rejected (at significance 0.05)
 
 # Symmetry verification
-trombin.s %>% group_by(skupina) %>% 
-  summarize(sikmost = moments::skewness(hodnoty),
-            test.pval = lawstat::symmetry.test(hodnoty, boot=FALSE)$p.value)
+trombin.s %>% group_by(group) %>% 
+  summarize(skewness = moments::skewness(value))
 # we do not reject the assumption of data symmetry
 
+# We want to compare medians (data not from normal dist.)-> Kruskal - Wallis test
 
-# We want to compare medians than. selections that do not have standards. distribution
-# ->Kruskal - Wallis test
+kruskal.test(trombin.s$value,trombin.s$group)
 
-kruskal.test(trombin.s$hodnoty,trombin.s$skupina)
-# At the significance level of 0.05, we reject the hypothesis of a median agreement
-# Ie. thrombin time is statistically significant
-# affected by the preparation. ->multiple comparisons
+# At the significance level of 0.05, we found statistically significant differences in medians
 
-
-# altP=T sets the p-value so that when making a decision
-# on statistical significance compared to alpha
-# default: altp=FALSE, then compare with alpha/2)
-
-dunn.test::dunn.test(trombin.s$hodnoty,trombin.s$skupina,
-          method = "bonferroni", altp = TRUE)      
+FSA::dunnTest(trombin.s$value~trombin.s$group,method = "bonferroni")      
 
 # effect counting
 library(dplyr)
 
 # overall average
-median_vsech = median(trombin.s$hodnoty)
-median_vsech
+median_overall = median(trombin.s$value)
+median_overall
 
 # averages in groups
-efekty = trombin.s %>% group_by(skupina) %>% 
-    summarize(median_skup = median(hodnoty))
+effects = trombin.s %>% group_by(group) %>% 
+    summarize(median_group = median(value))
 
 # effects
-efekty$efekt = efekty$median_skup - median_vsech
+effects$effect = effects$median_group - median_overall
 
 # List sorted
-efekty %>% arrange(desc(efekt))
+effects %>% arrange(desc(effect))
 
-# * Example 6.(multiple groups) ####
+# * Example 5.(multiple groups) ####
 #  
 # When Snow White got to the seven dwarves, she sensed an opportunity to make a lot of
-# money. The Dwarves basically beat the Snow White's hand and immediately handed over
-# all the mined gold to it. However, even this is not enough for Snow White and she
-# feels that she could benefit more from dwarves. Therefore, she began to record how
+# money. The Dwarves basically fell in love with the Snow White and immediately handed
+# over all of their mined gold. However, even this is not enough for Snow White and she
+# feels that she could benefit more from the dwarves. Therefore, she began to record how
 # many kilograms of gold a day she received from each of the dwarves(snehurka.xlsx).
-# Verify that the dwarves differ in the amount of gold mined, if so, to form a
-# homogeneous group in terms of gold mined.
-#  
+# Verify that the dwarves differ in the amount of gold mined.
 
 
-zlato = readxl::read_excel("data/snehurka.xlsx")
-head(zlato)
-# data is in standard data format
+gold = readxl::read_excel("data/snehurka.xlsx")
+colnames(gold) = c("ammount","dwarf")
+head(gold)
+# data is in the standard data format
 
-
-boxplot(zlato$hodnota ~ zlato$typ)
-# data does not contain OP
-
+boxplot(gold$ammount ~ gold$dwarf)
+# data does not outliars
 
 # verification of normality
 library(dplyr)
 
-zlato %>% group_by(typ) %>%
-    summarize(p.hodnota = shapiro.test(hodnota)$p.value)
+gold %>% group_by(dwarf) %>%
+    summarize(p.val = shapiro.test(ammount)$p.value)
 
-# At the significance level of 0.05, we do not reject the assumption of normality
+# The assumption of normality was not rejected -> Bartlett's test
+bartlett.test(gold$ammount ~ gold$dwarf) 
 
-
-# The presumption of normality was not rejected ->Bartlett's test
-bartlett.test(zlato$hodnota ~ zlato$typ) 
-
-# At the significance level of 0.05, the assumption of agreement of variances cannot be rejected
-
+# At the significance level of 0.05, there are no statistically significant differences in variances
 
 # ANOVA
-vysledky = aov(zlato$hodnota ~ zlato$typ) 
-summary(vysledky)  
-# We reject the presumption of conformity
-# ->there are stat. significant differences in mean values
-
+results = aov(gold$ammount ~ gold$dwarf) 
+summary(results)  
 
 # POST-HOC
-res = TukeyHSD(vysledky)[[1]]
+res = TukeyHSD(results)[[1]]
 res
 
-# effect counting
+# effects computation
 library(dplyr)
 
 # overall average
-prumer_vsech = mean(zlato$hodnota)
-prumer_vsech
+overall = mean(gold$ammount)
+overall
 
 # averages in groups
-efekty = zlato %>% group_by(typ) %>% 
-    summarize(mean_skup = mean(hodnota))
+effects = gold %>% group_by(dwarf) %>% 
+    summarize(mean_dwarf = mean(ammount))
 
 # effects
-efekty$efekt = efekty$mean_skup - prumer_vsech
+effects$effect = effects$mean_dwarf - overall
 
 # list sorted
-efekty.s = efekty %>% arrange(desc(efekt))
-efekty.s
+effects %>% arrange(desc(effect))
+
+# letter scheme, library rcompanion
+
+# make a dataframe with columns of pairs and pvalues
+matrix_posthoc = TukeyHSD(results)[[1]]
+posthoc_DF = data.frame(pairs = rownames(matrix_posthoc), 
+                   pval = matrix_posthoc[,'p adj'])
+# letter scheme
+rcompanion::cldList(pval ~ pairs, 
+        data = posthoc_DF,
+        threshold = 0.05)
 
 
 
