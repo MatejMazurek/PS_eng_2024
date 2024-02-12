@@ -1,0 +1,16 @@
+{
+    "editor.fontFamily": "FiraCode Nerd Font Mono",
+    "editor.fontLigatures": true,
+    "notebook.cellToolbarLocation": {
+        "default": "right",
+        "jupyter-notebook": "left"
+    },
+    "notebook.lineNumbers": "on",
+    "editor.inlineSuggest.enabled": true,
+    "workbench.colorTheme": "Default Dark Modern",
+    "workbench.editorAssociations": {
+        "*.xlsx": "gc-excelviewer-excel-editor",
+        "*.csv": "gc-excelviewer-csv-editor"
+    },
+    "csv-preview.separator": ";",
+}
